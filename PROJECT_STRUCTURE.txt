@@ -1,0 +1,278 @@
+ETCStorageHelper Test Application - Project Structure
+=====================================================
+
+Root Directory (etc-virtual-drive-consumer/)
+│
+├── 📦 ETCStorageHelper.1.0.0.nupkg          # The NuGet package you want to test
+│
+├── 📄 README.md                              # Original library README
+│
+├── 📄 TEST_APP_SUMMARY.md                    # 👈 START HERE! Complete overview
+│
+├── 🎯 ETCStorageHelper.TestApp.sln           # Visual Studio solution file
+│
+└── 📁 ETCStorageHelper.TestApp/              # Test application folder
+    │
+    ├── 🎮 Program.cs                         # Main entry point + menu system
+    │   ├─ InitializeSharePointSite()         # Connects to SharePoint
+    │   ├─ DisplayMenu()                      # Shows interactive menu
+    │   └─ Main()                             # Menu loop and test execution
+    │
+    ├── 🧪 Test Classes (Unit Tests)
+    │   ├── ETCFileTests.cs                   # Tests 8 ETCFile methods
+    │   │   ├─ WriteAllBytes                  # Write binary data
+    │   │   ├─ WriteAllText                   # Write text data
+    │   │   ├─ ReadAllBytes                   # Read binary data
+    │   │   ├─ ReadAllText                    # Read text data
+    │   │   ├─ Exists                         # Check file existence
+    │   │   ├─ Copy                           # Copy files
+    │   │   ├─ GetFileUrl                     # Get SharePoint URL
+    │   │   └─ Delete                         # Delete files
+    │   │
+    │   ├── ETCDirectoryTests.cs              # Tests 6 ETCDirectory methods
+    │   │   ├─ CreateDirectory                # Create folders (nested)
+    │   │   ├─ Exists                         # Check folder existence
+    │   │   ├─ GetFiles                       # List files in folder
+    │   │   ├─ GetDirectories                 # List subdirectories
+    │   │   ├─ GetFolderUrl                   # Get SharePoint folder URL
+    │   │   └─ Delete                         # Delete folders (recursive/non)
+    │   │
+    │   ├── ETCPathTests.cs                   # Tests 5 ETCPath methods
+    │   │   ├─ Combine                        # Join path segments
+    │   │   ├─ GetDirectoryName               # Extract parent directory
+    │   │   ├─ GetFileName                    # Extract filename
+    │   │   ├─ GetExtension                   # Get file extension
+    │   │   └─ GetFileNameWithoutExtension    # Get name without extension
+    │   │
+    │   └── ETCFileAsyncTests.cs              # Tests large file handling
+    │       ├─ TestSmallFileSync              # 1MB synchronous
+    │       ├─ TestMediumFileSync             # 10MB synchronous
+    │       ├─ TestLargeFileAsync             # 60MB async/queued
+    │       ├─ TestLargeFileRead              # First-time read (download)
+    │       └─ TestCachedRead                 # Cached read (fast)
+    │
+    ├── 🔧 Integration Tests
+    │   └── IntegrationTests.cs               # Complete end-to-end workflow
+    │       ├─ CreateProjectStructure         # Step 1: Create folders
+    │       ├─ UploadProjectDocuments         # Step 2: Upload 6 files
+    │       ├─ ListAndVerifyFiles             # Step 3: List and verify
+    │       ├─ CopyAndOrganizeFiles           # Step 4: Copy files
+    │       ├─ GetSharePointUrls              # Step 5: Get URLs
+    │       ├─ ReadAndVerifyContent           # Step 6: Read and verify
+    │       └─ TestPathManipulation           # Step 7: Path operations
+    │
+    ├── 🛠️ Utilities
+    │   └── TestDataGenerator.cs              # Helper utilities
+    │       ├─ GenerateBinaryData()           # Random binary data
+    │       ├─ GenerateTextData()             # Lorem ipsum text
+    │       ├─ GenerateLargeFile()            # Large files (MB)
+    │       ├─ GeneratePdfLikeData()          # PDF-like binary
+    │       ├─ CleanupTestData()              # Remove all test data
+    │       └─ FormatBytes()                  # Human-readable sizes
+    │
+    ├── ⚙️ Configuration
+    │   └── App.config                        # 👈 EDIT THIS FIRST!
+    │       ├─ ETCStorage.Commercial.*        # SharePoint settings
+    │       ├─ Test.UserId                    # Your user ID
+    │       ├─ Test.UserName                  # Your display name
+    │       ├─ Test.ApplicationName           # App name for logs
+    │       └─ Test.BasePath                  # Test data folder
+    │
+    ├── 📦 Project Configuration
+    │   └── ETCStorageHelper.TestApp.csproj   # .NET project file
+    │       ├─ TargetFramework: net46         # .NET Framework 4.6
+    │       ├─ OutputType: Exe                # Console application
+    │       └─ PackageReference               # ETCStorageHelper 1.0.0
+    │
+    └── 📚 Documentation
+        ├── README.md                         # Detailed documentation
+        │   ├─ Features overview
+        │   ├─ Setup instructions
+        │   ├─ Usage guide
+        │   ├─ API reference
+        │   ├─ Troubleshooting
+        │   └─ Project structure
+        │
+        ├── QUICKSTART.md                     # 5-minute getting started
+        │   ├─ Prerequisites
+        │   ├─ Step-by-step setup
+        │   ├─ First test run
+        │   ├─ Common issues
+        │   └─ Next steps
+        │
+        └── TEST_COVERAGE.md                  # Complete test coverage
+            ├─ API coverage table (100%)
+            ├─ Test scenarios
+            ├─ Performance metrics
+            ├─ Edge cases
+            └─ Test execution times
+
+
+Interactive Menu Structure
+==========================
+
+Main Menu (Program.cs)
+│
+├── [1] Test ETCFile Methods ──────────────► ETCFileTests.RunAllTests()
+│                                             │
+│                                             ├─ 8 file operations
+│                                             ├─ ~15 seconds
+│                                             └─ Small files (1KB-500KB)
+│
+├── [2] Test ETCDirectory Methods ─────────► ETCDirectoryTests.RunAllTests()
+│                                             │
+│                                             ├─ 7 directory operations
+│                                             ├─ ~20 seconds
+│                                             └─ Nested structures
+│
+├── [3] Test ETCPath Methods ──────────────► ETCPathTests.RunAllTests()
+│                                             │
+│                                             ├─ 5 path operations
+│                                             ├─ < 1 second
+│                                             └─ Runs locally (no SharePoint)
+│
+├── [4] Test ETCFileAsync Methods ─────────► ETCFileAsyncTests.RunAllTests()
+│                                             │
+│                                             ├─ 5 large file tests
+│                                             ├─ ~5-10 minutes
+│                                             └─ Files: 1MB, 10MB, 60MB
+│
+├── [5] Run Complete Integration Test ─────► IntegrationTests.RunCompleteScenario()
+│                                             │
+│                                             ├─ 7-step workflow
+│                                             ├─ ~30-60 seconds
+│                                             └─ Real-world scenario
+│
+├── [6] Cleanup Test Data ─────────────────► TestDataGenerator.CleanupTestData()
+│                                             │
+│                                             ├─ Requires confirmation
+│                                             ├─ Deletes ETCStorageTest/
+│                                             └─ Safe to run anytime
+│
+└── [0] Exit
+
+
+SharePoint Structure Created During Tests
+==========================================
+
+SharePoint Site
+└── Document Library (e.g., "Documents")
+    └── ETCStorageTest/                      # Test base path (configurable)
+        │
+        ├── FileTests/                        # Created by Option 1
+        │   ├── test-binary.dat               # Binary file (1KB)
+        │   ├── test-text.txt                 # Text file (500 chars)
+        │   └── test-text-copy.txt            # Copy of text file
+        │
+        ├── DirectoryTests/                   # Created by Option 2
+        │   ├── Level1/                       # Nested directories
+        │   │   └── Level2/
+        │   │       └── Level3/
+        │   └── ListingTest/                  # Directory listing test
+        │       ├── file1.txt
+        │       ├── file2.txt
+        │       ├── file3.txt
+        │       ├── SubDir1/
+        │       │   └── subfile.txt
+        │       └── SubDir2/
+        │           └── subfile.txt
+        │
+        ├── AsyncTests/                       # Created by Option 4
+        │   ├── small-1mb.dat                 # 1MB file
+        │   ├── medium-10mb.dat               # 10MB file
+        │   └── large-60mb.dat                # 60MB file
+        │
+        └── IntegrationTest/                  # Created by Option 5
+            └── ClientA/
+                └── 2025/
+                    └── Project001/
+                        ├── Reports/
+                        │   ├── annual-report-2025.pdf
+                        │   ├── draft-v1.txt
+                        │   ├── draft-v2.txt
+                        │   └── draft-v3.txt
+                        ├── Data/
+                        │   └── measurements.csv
+                        ├── Documents/
+                        │   └── project-notes.txt
+                        └── Archive/
+                            └── draft-v3-archived.txt
+
+
+Quick Start Checklist
+=====================
+
+□ 1. Read TEST_APP_SUMMARY.md (this gives you the complete overview)
+□ 2. Edit App.config with your SharePoint credentials
+□ 3. Build: dotnet build (or Ctrl+Shift+B in Visual Studio)
+□ 4. Run: dotnet run (or F5 in Visual Studio)
+□ 5. Test Option 3 first (ETCPath - runs locally, no SharePoint)
+□ 6. Test Option 1 (ETCFile - basic operations, ~15s)
+□ 7. Test Option 5 (Integration - complete workflow, ~60s)
+□ 8. Cleanup: Option 6 (removes all test data)
+
+
+Key Files to Know
+=================
+
+🔧 Configuration:
+   App.config                    ← Edit this with your credentials
+
+📖 Documentation:
+   TEST_APP_SUMMARY.md           ← Start here (overview)
+   QUICKSTART.md                 ← 5-minute setup guide
+   README.md                     ← Detailed documentation
+   TEST_COVERAGE.md              ← Complete test coverage details
+
+🎮 Running the App:
+   ETCStorageHelper.TestApp.sln  ← Open in Visual Studio
+   Program.cs                    ← Main entry point
+
+🧪 Understanding Tests:
+   ETCFileTests.cs               ← File operations examples
+   IntegrationTests.cs           ← Real-world workflow example
+   TestDataGenerator.cs          ← How to generate test data
+
+
+Color Legend
+============
+
+✅ Green text = Success
+❌ Red text = Error/Failure
+⚠️ Yellow text = Warning
+ℹ️ Blue text = Information
+📦 Package/Binary file
+📄 Documentation file
+📁 Folder
+🎮 Executable/Main program
+🧪 Test file
+🔧 Configuration
+🛠️ Utility/Helper
+🎯 Important file
+👈 Action required
+
+
+Tips
+====
+
+1. Start with Option 3 (ETCPath) - it runs locally without SharePoint
+2. Option 4 (Large files) takes 5-10 minutes - run it last if needed
+3. All test data is isolated under ETCStorageTest/ - safe from production
+4. Tests are idempotent - run them multiple times safely
+5. Check SharePoint "ETC Storage Logs" list for audit trail
+6. Use Option 6 to cleanup when you're done testing
+
+
+Support & Help
+==============
+
+📖 Full documentation: ETCStorageHelper.TestApp/README.md
+🚀 Quick start: ETCStorageHelper.TestApp/QUICKSTART.md
+📊 Test coverage: ETCStorageHelper.TestApp/TEST_COVERAGE.md
+🌐 Main library: README.md (project root)
+🔗 Repository: https://github.com/pablomartinferrari/etc-virtual-drive
+
+
+Happy Testing! 🎉
+
+
