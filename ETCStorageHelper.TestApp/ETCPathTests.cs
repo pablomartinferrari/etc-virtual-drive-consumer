@@ -40,7 +40,7 @@ namespace ETCStorageHelper.TestApp
             {
                 new { Parts = new[] { "Client A", "2025", "Reports" }, Expected = "Client A/2025/Reports" },
                 new { Parts = new[] { "Client A", "2025", "Job001", "report.pdf" }, Expected = "Client A/2025/Job001/report.pdf" },
-                new { Parts = new[] { "Client B", "Nested", "Deep", "Path", "File.txt" }, Expected = "Test/Nested/Deep/Path/File.txt" }
+                new { Parts = new[] { "Client B", "Nested", "Deep", "Path", "File.txt" }, Expected = "Client B/Nested/Deep/Path/File.txt" }
             };
 
             foreach (var test in tests)

@@ -95,18 +95,31 @@ namespace ETCStorageHelper.TestApp
             var reportData = TestDataGenerator.GeneratePdfLikeData(500); // 500KB
             Console.WriteLine($"Uploading: {reportPath} ({TestDataGenerator.FormatBytes(reportData.Length)})");
             ETCFile.WriteAllBytes(reportPath, reportData, site);
+            // Wait for the file to become visible (eventual consistency protection)
+            if (!WaitForExists(site, reportPath, attempts: 6, delayMs: 750))
+            {
+                throw new Exception($"Uploaded report not visible after retries: {reportPath}");
+            }
 
             // Upload a text document
             var docPath = ETCPath.Combine(projectPath, "Documents", "project-notes.txt");
             var docText = TestDataGenerator.GenerateTextData(2000);
             Console.WriteLine($"Uploading: {docPath} ({docText.Length} chars)");
             ETCFile.WriteAllText(docPath, docText, site);
+            if (!WaitForExists(site, docPath, attempts: 6, delayMs: 750))
+            {
+                throw new Exception($"Uploaded notes not visible after retries: {docPath}");
+            }
 
             // Upload data file
             var dataPath = ETCPath.Combine(projectPath, "Data", "measurements.csv");
             var csvContent = "Date,Value,Status\n2025-01-01,123.45,Active\n2025-01-02,234.56,Active\n2025-01-03,345.67,Complete";
             Console.WriteLine($"Uploading: {dataPath}");
             ETCFile.WriteAllText(dataPath, csvContent, site);
+            if (!WaitForExists(site, dataPath, attempts: 6, delayMs: 750))
+            {
+                throw new Exception($"Uploaded CSV not visible after retries: {dataPath}");
+            }
 
             // Upload multiple report versions
             for (int i = 1; i <= 3; i++)
@@ -187,11 +200,48 @@ namespace ETCStorageHelper.TestApp
             Console.WriteLine($"File URL:");
             Console.WriteLine($"  {fileUrl}");
 
+            // Assertions for file URL
+            if (string.IsNullOrWhiteSpace(fileUrl))
+            {
+                throw new Exception("GetFileUrl returned an empty URL");
+            }
+            if (!Uri.TryCreate(fileUrl, UriKind.Absolute, out var parsedFileUri) ||
+                !(string.Equals(parsedFileUri.Scheme, "http", StringComparison.OrdinalIgnoreCase) ||
+                  string.Equals(parsedFileUri.Scheme, "https", StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new Exception($"GetFileUrl did not return a valid absolute HTTP/HTTPS URL: {fileUrl}");
+            }
+            if (!fileUrl.StartsWith(site.SiteUrl, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"Warning: File URL does not start with site base URL.\n  Site: {site.SiteUrl}\n  URL : {fileUrl}");
+            }
+            var expectedFileName = ETCPath.GetFileName(reportPath);
+            if (fileUrl.IndexOf(expectedFileName, StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                Console.WriteLine($"Warning: File URL does not contain expected file name '{expectedFileName}'.\n  URL: {fileUrl}");
+            }
+
             // Get folder URL
             var reportsFolder = ETCPath.Combine(projectPath, "Reports");
             string folderUrl = ETCDirectory.GetFolderUrl(reportsFolder, site);
             Console.WriteLine($"\nFolder URL:");
             Console.WriteLine($"  {folderUrl}");
+
+            // Basic assertions for folder URL
+            if (string.IsNullOrWhiteSpace(folderUrl))
+            {
+                throw new Exception("GetFolderUrl returned an empty URL");
+            }
+            if (!Uri.TryCreate(folderUrl, UriKind.Absolute, out var parsedFolderUri) ||
+                !(string.Equals(parsedFolderUri.Scheme, "http", StringComparison.OrdinalIgnoreCase) ||
+                  string.Equals(parsedFolderUri.Scheme, "https", StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new Exception($"GetFolderUrl did not return a valid absolute HTTP/HTTPS URL: {folderUrl}");
+            }
+            if (!folderUrl.StartsWith(site.SiteUrl, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"Warning: Folder URL does not start with site base URL.\n  Site: {site.SiteUrl}\n  URL : {folderUrl}");
+            }
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("✓ Retrieved SharePoint URLs");
@@ -205,6 +255,10 @@ namespace ETCStorageHelper.TestApp
 
             // Read text file
             var notesPath = ETCPath.Combine(projectPath, "Documents", "project-notes.txt");
+            if (!ETCFile.Exists(notesPath, site))
+            {
+                throw new Exception($"Notes file not found before read: {notesPath}");
+            }
             string notes = ETCFile.ReadAllText(notesPath, site);
             Console.WriteLine($"Read text file: {notesPath}");
             Console.WriteLine($"  Length: {notes.Length} characters");
@@ -212,12 +266,21 @@ namespace ETCStorageHelper.TestApp
 
             // Read binary file
             var reportPath = ETCPath.Combine(projectPath, "Reports", "annual-report-2025.pdf");
+            // Ensure it exists before attempting a download
+            if (!ETCFile.Exists(reportPath, site))
+            {
+                throw new Exception($"Report not found before download attempt: {reportPath}");
+            }
             byte[] reportData = ETCFile.ReadAllBytes(reportPath, site);
             Console.WriteLine($"\nRead binary file: {reportPath}");
             Console.WriteLine($"  Size: {TestDataGenerator.FormatBytes(reportData.Length)}");
 
             // Read CSV
             var csvPath = ETCPath.Combine(projectPath, "Data", "measurements.csv");
+            if (!ETCFile.Exists(csvPath, site))
+            {
+                throw new Exception($"CSV file not found before read: {csvPath}");
+            }
             string csvContent = ETCFile.ReadAllText(csvPath, site);
             string[] csvLines = csvContent.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
             Console.WriteLine($"\nRead CSV file: {csvPath}");
@@ -227,6 +290,26 @@ namespace ETCStorageHelper.TestApp
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("✓ Read and verified 3 files");
             Console.ResetColor();
+        }
+
+        private static bool WaitForExists(SharePointSite site, string path, int attempts = 5, int delayMs = 500)
+        {
+            for (int i = 0; i < attempts; i++)
+            {
+                try
+                {
+                    if (ETCFile.Exists(path, site))
+                    {
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // Ignore intermittent errors between upload and availability
+                }
+                System.Threading.Thread.Sleep(delayMs);
+            }
+            return false;
         }
 
         private static void TestPathManipulation(string projectPath)

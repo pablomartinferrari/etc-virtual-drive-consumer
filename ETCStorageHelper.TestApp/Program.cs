@@ -1,5 +1,6 @@
 using System;
 using System.Configuration;
+using System.Net;
 using ETCStorageHelper;
 
 namespace ETCStorageHelper.TestApp
@@ -15,6 +16,20 @@ namespace ETCStorageHelper.TestApp
             Console.WriteLine("   ETC Storage Helper - Test Application");
             Console.WriteLine("==============================================");
             Console.WriteLine();
+
+            // Ensure modern TLS and corporate proxy support before any HTTP calls
+            try
+            {
+                ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
+                if (WebRequest.DefaultWebProxy != null)
+                {
+                    WebRequest.DefaultWebProxy.Credentials = CredentialCache.DefaultNetworkCredentials;
+                }
+            }
+            catch
+            {
+                // Non-fatal: continue even if environment does not allow overriding defaults
+            }
 
             // Initialize SharePoint connection
             if (!InitializeSharePointSite())

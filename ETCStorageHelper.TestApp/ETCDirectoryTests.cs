@@ -175,6 +175,46 @@ namespace ETCStorageHelper.TestApp
             Console.WriteLine($"✓ GetFolderUrl succeeded in {duration.TotalMilliseconds:F2}ms");
             Console.WriteLine($"  URL: {url}");
             Console.ResetColor();
+
+            // Basic assertions
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new Exception("GetFolderUrl returned an empty URL");
+            }
+
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var parsed) ||
+                !(string.Equals(parsed.Scheme, "http", StringComparison.OrdinalIgnoreCase) ||
+                  string.Equals(parsed.Scheme, "https", StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new Exception($"GetFolderUrl did not return a valid absolute HTTP/HTTPS URL: {url}");
+            }
+
+            // Expect URL to align with the configured site base URL
+            if (!url.StartsWith(site.SiteUrl, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"Warning: URL does not start with site base URL.\n  Site: {site.SiteUrl}\n  URL : {url}");
+            }
+
+            // Edge case 1: trailing slash in input path should not change target URL
+            var testPathWithSlash = testPath.EndsWith("/") ? testPath : testPath + "/";
+            var urlWithSlash = ETCDirectory.GetFolderUrl(testPathWithSlash, site);
+            if (!string.Equals(url.TrimEnd('/'), urlWithSlash.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))
+            {
+                throw new Exception("GetFolderUrl produced different URLs for paths with/without trailing slash");
+            }
+
+            // Edge case 2: nested folder should produce a URL that reflects the deeper path
+            var nestedPath = ETCPath.Combine(testPath, "Level2");
+            var nestedUrl = ETCDirectory.GetFolderUrl(nestedPath, site);
+            if (string.IsNullOrWhiteSpace(nestedUrl))
+            {
+                throw new Exception("GetFolderUrl returned empty URL for nested folder");
+            }
+            if (nestedUrl.IndexOf("Level2", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                Console.WriteLine($"Warning: Nested URL does not contain expected folder segment 'Level2'.\n  URL: {nestedUrl}");
+            }
+            Console.WriteLine($"  Nested URL: {nestedUrl}");
         }
 
         private static void TestDeleteNonRecursive(SharePointSite site, string basePath)
