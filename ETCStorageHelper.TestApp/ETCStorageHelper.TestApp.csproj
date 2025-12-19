@@ -7,11 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ETCStorageHelper" Version="1.0.6" />
-
-  </ItemGroup>
-
-  <ItemGroup>
     <Reference Include="System.Configuration" />
   </ItemGroup>
 
@@ -23,6 +18,10 @@
 
   <ItemGroup>
     <Folder Include="packages\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ETCStorageHelper" Version="1.0.7" />
   </ItemGroup>
 
 </Project>
